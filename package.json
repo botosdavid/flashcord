@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon server"
+    "start": "node server",
+    "startd": "nodemon server"
   },
   "author": "Botos David",
   "license": "ISC",
