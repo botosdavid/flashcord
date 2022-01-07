@@ -1,4 +1,5 @@
-const socket = io('http://localhost:3000', {transports: ['websocket']});
+// const socket = io('http://localhost:3000', {transports: ['websocket']});
+const socket = io('https://mybrary-bda.flashcord.com',{transports: ['websocket']})
 const roomButton = document.querySelector('#room-button');
 const roomInput = document.querySelector('#room-input');
 const roomContainer = document.querySelector('#rooms-container');
