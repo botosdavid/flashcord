@@ -1,4 +1,4 @@
-const url = 'http://localhost:3000' || 'https://flashcord.herokuapp.com';
+const url = window.location.href.slice(0, -1);;
 const socket = io(url, {transports: ['websocket']});
 const roomButton = document.querySelector('#room-button');
 const roomInput = document.querySelector('#room-input');
