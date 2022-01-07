@@ -20,7 +20,8 @@ if(roomButton){
 
 if(messageForm){
     const roomId = window.location.href.split('/').pop();
-    const username = prompt('Name: ');
+    let username = prompt('Name: ');
+    if(username == '' || username == null) username = 'Guest';
     socket.emit('connected-to-room',  username, roomId );
 
 
