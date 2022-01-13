@@ -8,7 +8,7 @@ const Room = require('../models/Room');
 const User = require('../models/User');
 const Message = require('../models/Message');
 
-mongoose.connect(process.env.DATABASE_URL, () => {
+mongoose.connect(process.env.DATABASE_URL,{ useNewUrlParser: true }, () => {
     console.log('Connected to Mongo DataBase!');
 })
 
