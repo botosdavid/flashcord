@@ -12,6 +12,12 @@ mongoose.connect(process.env.DATABASE_URL,{ useNewUrlParser: true }, () => {
     console.log('Connected to Mongo DataBase!');
 })
 
+mongoose.connection.on("error", err => {
+
+    console.log("err", err)
+  
+})
+
 const renderHomePage = async (req,res) => {
     try{
         const rooms = await Room.find();
