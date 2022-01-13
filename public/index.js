@@ -1,4 +1,4 @@
-const url = window.location.href.slice(0, -1);;
+const url = window.location.href.split('/').slice(0, -1).join('/');
 const socket = io(url, {transports: ['websocket']});
 const roomButton = document.querySelector('#room-button');
 const roomInput = document.querySelector('#room-input');
@@ -19,12 +19,13 @@ if(roomButton){
 }
 
 if(messageForm){
+
     const roomId = window.location.href.split('/').pop();
     let username = prompt('Name: ');
     if(username == '' || username == null) username = 'Guest';
     socket.emit('connected-to-room',  username, roomId );
-
-
+    messageInput.focus();
+    
     messageButton.addEventListener('click', (e) => {
         e.preventDefault();
         const message = messageInput.value;
@@ -50,10 +51,14 @@ socket.on('room-users', users => {
 const showRoom = (room) => {
     const div = document.createElement('div');
     const link = document.createElement('a');
-    const container = document.createElement('div');
+    const container = document.createElement('h4');
     div.innerText = room.name;
-    link.href = `/${room.id}`;
+    link.href = `/${room._id}`;
     link.innerText = 'Join';
+    link.innerHTML += `<i class="bi bi-arrow-right"></i>`
+    div.classList.add('text-second');
+    link.classList.add('btn','btn-prime');
+    container.classList.add('d-flex','justify-content-between','align-items-center','pt-2','pb-2','border-top','border-second');
     container.append(div);
     container.append(link);
     roomContainer.append(container);
@@ -63,22 +68,32 @@ const showRoom = (room) => {
 const showMessage = (message, username, time) => {
     const messageContainer = document.createElement('div');
     const messageText = document.createElement('b');
+    const div = document.createElement('div');
     messageText.innerText = message;
     const timeText = document.createElement('p');
     timeText.innerText = time;
     const nameText = document.createElement('p');
     nameText.innerText = username;
-    messageContainer.append(nameText);
-    messageContainer.append(timeText);
+    div.append(nameText);
+    div.append(timeText);
+    messageContainer.append(div);
     messageContainer.append(messageText);
+    messageContainer.classList.add('message');
     messagesContainer.append(messageContainer);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    const audio = new Audio('./audio/bell-sound.wav');
+    audio.play();
 }
 
 const updateRoomUsers = (users) => {
     usersContainer.innerHTML = '';
     users.forEach( user => {
         const userContainer = document.createElement('div');
-        userContainer.innerText = user.name;
+        userContainer.innerHTML += `<i class="bi bi-dot text-green"></i>`;
+        const userNameText = document.createElement('span');
+        userNameText.classList.add('text-second');
+        userNameText.innerText = `${user.name}`;
+        userContainer.append(userNameText);
         usersContainer.append(userContainer);
     })
 }
@@ -90,3 +105,4 @@ const getTime = () => {
     const dateTime = time+', '+date;
     return dateTime;
 }
+

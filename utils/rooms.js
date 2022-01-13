@@ -1,76 +1,122 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
+const mongoose = require('mongoose');
 const moment = require('moment');
-let roomId = 0;
-let rooms = [];
 
-const createRoom = roomName => {
-    roomId++;
-    const room = {
-        id: roomId + '',
-        name: roomName,
-        users: []
+const Room = require('../models/Room');
+const User = require('../models/User');
+const Message = require('../models/Message');
+
+mongoose.connect(process.env.DATABASE_URL, () => {
+    console.log('Connected to Mongo DataBase!');
+})
+
+const renderHomePage = async (req,res) => {
+    try{
+        const rooms = await Room.find();
+        return res.render('home', { rooms : rooms });
+    }catch{
+        console.error('Error while searching rooms');
     }
-    rooms.push(room);
-    return room;
 }
 
-const getRooms = () => {
-    return rooms;
+const renderRoomPage = async (req,res) => {
+    try{
+        const room = await Room.findOne({ _id: req.params.roomId})
+        const messages = await Message.find({ room: req.params.roomId });
+        return res.render('room', { room: room , messages: messages });
+    }catch{
+        console.error('Room not found in database!');
+    }
 }
 
-const getRoom = (roomId) => {
-    return rooms.find( room => room.id == roomId);
-}
-
-const addUserToRoom = (roomId, userId, userName) => {
-    const roomIndex = rooms.findIndex( room => room.id == roomId);
-    const user = { id: userId , name: userName };
-    rooms[roomIndex].users.push(user);
-}
-
-const getUserName = (userId) => {
-    const username = rooms.reduce((username, currentRoom) => {
-        const user = currentRoom.users.find( user => user.id == userId);
-        if(user) return user.name;
-        return username;
-    }, '')
-    return username;
-}
-
-const getUserRoom = (userId) => {
-    const room = rooms.find( room => {
-        const user = room.users.find( user => user.id == userId );
-        return user;
+const createRoomInDataBase = async (roomName) => {
+    const newRoom = new Room({
+        name: roomName
     })
-    if(!room) return null;
-    return room.id;
+    try{
+        const room = await newRoom.save();
+        console.log('succes saving room');
+        return room;
+    }catch{
+        console.error('Error while saving room');
+    }
 }
 
-const deleteUserFromRoom  = (userId ) => {
-    const roomId = getUserRoom(userId);
-    if(!roomId) return;
-    const roomIndex = rooms.findIndex( room => room.id == roomId);
-    rooms[roomIndex].users = rooms[roomIndex].users.filter( user => user.id != userId);
+const saveUserInDataBase = async (socketId, username, roomId) => {
+    const newUser = new User({
+        name: username,
+        socketId: socketId,
+        room: roomId
+    })
+    try{
+        const user = await newUser.save();
+        console.log('Success saving User');
+        return user;
+    }catch{
+        console.error('Error while saving user');
+    }
 }
 
-const getRoomUsers = (roomId) => {
-    return getRoom(roomId).users;
+const deliverMessage = async (socket, message) => {
+    try{
+        const time = moment().format('H:mm:ss, M-D-YYYY');
+        const user = await User.findOne({ socketId: socket.id });
+        if(!user) return;
+        socket.to(user.room).emit('recieve-message', message, user.name, time);
+        console.log(`delivered`);
+    }catch{
+        console.error('Error while delivering message!');
+    }
 }
 
-const messageDeliver = (socket, message) => {
-    const username = getUserName(socket.id);
-    const roomId = getUserRoom(socket.id);
-    const time = moment().format('H:mm:ss, M-D-YYYY');
-    socket.to(roomId).emit('recieve-message', message, username, time);
+const getRoomUsers = async (roomId) => {
+    try{
+        const users = await User.find({ room: roomId });
+        console.log('Success getting room users.');
+        return users;
+    }catch{
+        console.error('Error while searching for room users.');
+    }
 }
 
-module.exports = { 
-    createRoom,
-    getRooms,
-    getRoom,
-    addUserToRoom,
-    getUserName,
-    getUserRoom,
-    deleteUserFromRoom,
-    messageDeliver,
-    getRoomUsers
+const saveMessageInDataBase = async (socket ,message) => {
+    try{
+        const user = await User.findOne({ socketId: socket.id });
+        const time = moment().format('H:mm:ss, M-D-YYYY');
+        const newMessage = new Message({
+            text: message,
+            username: user.name,
+            time: time,
+            room: user.room
+        })
+        const savedMessage = await newMessage.save();
+        console.log('Success saving message.');
+    }catch{
+        console.error('Error while saving message.');
+    }
+    
+}
+
+const deleteUserInDataBase = async (socket) => {
+    try{
+        const user = await User.findOne({ socketId: socket.id});
+        if(!user) return;
+        await User.findByIdAndDelete(user._id);
+        return user;
+    }catch{
+        console.error('Error while deleteing user.');
+    }
+}
+
+module.exports = {
+    renderHomePage,
+    renderRoomPage,
+    createRoomInDataBase,
+    saveUserInDataBase,
+    deliverMessage,
+    getRoomUsers,
+    saveMessageInDataBase,
+    deleteUserInDataBase
 };

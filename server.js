@@ -7,15 +7,14 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 
 const { 
-    createRoom,
-    getRooms,
-    getRoom,
-    addUserToRoom,
-    getUserName,
-    getUserRoom,
-    deleteUserFromRoom,
-    messageDeliver,
-    getRoomUsers
+    getRoomUsers,
+    renderHomePage,
+    renderRoomPage,
+    createRoomInDataBase,
+    saveUserInDataBase,
+    deliverMessage,
+    saveMessageInDataBase,
+    deleteUserInDataBase
 } = require('./utils/rooms');
 
 //server config
@@ -25,40 +24,39 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true}));
 
 //routes
-app.get('/', (req,res) => {
-    res.render('home', { rooms : getRooms() });
-})
+app.get('/', renderHomePage);
 
-app.get('/:roomId', (req,res) => {
-    const room = getRoom(req.params.roomId);
-    res.render('room', { room: room })
-})
+app.get('/:roomId', renderRoomPage);
+
 
 //socketio setup
 io.on('connection', (socket) => {
 
     console.log('user connected');
-    socket.on('create-room', roomName => {
-        const room = createRoom(roomName);
+    socket.on('create-room', async roomName => {
+        const room = await createRoomInDataBase(roomName);
         io.emit('show-created-room', room );
     })
-    socket.on('connected-to-room', (username, roomId) => {
+    socket.on('connected-to-room', async (username, roomId) => {
         socket.join(roomId);
-        addUserToRoom(roomId, socket.id, username );
-        messageDeliver(socket, 'Joined to room!');
-        io.sockets.in(roomId).emit('room-users', getRoomUsers(roomId));
+        const user = await saveUserInDataBase(socket.id, username, roomId);
+        await deliverMessage(socket, 'Joined!');
+        const users = await getRoomUsers(user.room);
+        io.sockets.in(user.room).emit('room-users', users);
     });
-    socket.on('send-message', message => {
-        messageDeliver(socket, message);
+    socket.on('send-message', async (message) => {
+        await deliverMessage(socket, message);
+        await saveMessageInDataBase(socket, message);
     })
-    socket.on('disconnect', () => {
-        const roomId = getUserRoom(socket.id);
-        messageDeliver(socket, 'Disconnected!');
-        deleteUserFromRoom(socket.id);
-        if(!roomId) return;
-        io.sockets.in(roomId).emit('room-users', getRoomUsers(roomId));
+    socket.on('disconnect', async () => {
+        await deliverMessage(socket, 'Disconnected!'); 
+        const user = await deleteUserInDataBase(socket);
+        if(!user) return;
+        const users = await getRoomUsers(user.room);
+        io.sockets.in(user.room).emit('room-users', users);
     })
-    
 })
 
-server.listen(PORT);
+server.listen(PORT, () => {
+    console.log(`Server running on ${PORT}`);
+});

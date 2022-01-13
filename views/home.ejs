@@ -7,21 +7,39 @@
     <script defer src="socket.io/socket.io.js"></script>
     <script defer src="index.js"></script>
     <title>Home</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
 </head>
-<body>
-    <h1>Home</h1>
-        <div id="rooms-container">
-            <% rooms.forEach( room => { %>
-                <div>
-                    <div><%= room.name %></div>
-                    <a href="/<%= room.id %> ">Join</a>
-                </div>
-            <% }) %> 
+<body class="d-flex align-items-center vh-100">
+    <div class="bg-bg-2 container d-flex flex-column justify-content-between rounded h-75 containermain">
+        <div class="w-100 p-2">
+            <h3 class="text-prime">Flashcord <i class="bi bi-lightning-charge"></i></h2>
         </div>
-        <form action="">
-            <input id="room-input" type="text">
-            <button id="room-button" type="submit">Add room</button>
-        </form>
+        <div class="bg-bg-3 container p-4 rounded vh-50">
+            <div>
+                <h1 class="text-second">Welcome to Flashcord!</h1>
+                <h5 class="text-prime pb-5">Join a room and start chatting!</p>
+            </div>
+            
+            <div id="rooms-container" class="container scroll">
+                <% rooms.forEach( room => { %>
+                    <div class="d-flex justify-content-between align-items-center pt-2 pb-2 border-top border-second">
+                        <h4 class="text-second"><%= room.name %></h4>
+                        <a href="/<%= room._id %> " class="btn btn-prime">Join <i class="bi bi-arrow-right"></i></i></a>
+                    </div>
+                <% }) %> 
+            </div>
+        </div>
+        <div class="container p-4">
+            <form>
+                <div class="input-group">
+                    <input id="room-input" type="text" placeholder="Room Name.." class="form-control text-second">
+                    <button id="room-button" type="submit" class="btn btn-second input-group-btn">Add room</button>
+                </div>
+            </form>
+        </div>
+        
+    </div> 
 
 </body>
 </html>

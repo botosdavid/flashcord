@@ -1,0 +1,43 @@
+.scroll { 
+    overflow-y:scroll; 
+    position:relative;
+    max-height: 30vh;
+}
+
+.scroll-messages{
+    overflow-y:scroll; 
+    position:relative;
+    max-height: 53vh;
+}
+
+.message {
+    padding: 0.6rem 1rem;
+    border-radius: 0.4rem;
+    clear: both;
+    width: auto;
+    height: auto;
+    background-color: #474747;
+    margin-top: 0.8rem;
+
+    div{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        p{
+            color: gray;
+        }
+    }
+    b{
+        color: whitesmoke;
+        overflow-wrap: break-word;
+    }
+} 
+  
+@media (min-width:900px) {
+    .containermain {
+        width: 50vw !important;
+    } 
+}
+
+
+
