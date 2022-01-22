@@ -3,7 +3,6 @@ dotenv.config();
 
 const mongoose = require('mongoose');
 const moment = require('moment');
-
 const Room = require('../models/Room');
 const User = require('../models/User');
 const Message = require('../models/Message');
@@ -12,56 +11,43 @@ mongoose.connect(process.env.DATABASE_URL,{ useNewUrlParser: true }, () => {
     console.log('Connected to Mongo DataBase!');
 })
 
-mongoose.connection.on("error", err => {
-
-    console.log("err", err)
-  
-})
-
 const renderHomePage = async (req,res) => {
     try{
+        if(!req.user) return;
+        const userGoogleId = req.user.googleId;
         const rooms = await Room.find();
-        return res.render('home', { rooms : rooms });
-    }catch{
+        return res.render('home', { rooms : rooms, googleId: userGoogleId });
+    }catch(err){
         console.error('Error while searching rooms');
     }
 }
 
 const renderRoomPage = async (req,res) => {
     try{
-        const room = await Room.findOne({ _id: req.params.roomId})
+        const userGoogleId = req.user.googleId;
+        const room = await Room.findOne({ _id: req.params.roomId});
         const messages = await Message.find({ room: req.params.roomId });
-        return res.render('room', { room: room , messages: messages });
+        return res.render('room', { room: room , messages: messages, googleId: userGoogleId });
     }catch{
         console.error('Room not found in database!');
     }
 }
 
 const createRoomInDataBase = async (roomName) => {
-    const newRoom = new Room({
-        name: roomName
-    })
+    const newRoom = new Room({ name: roomName })
     try{
         const room = await newRoom.save();
-        console.log('succes saving room');
         return room;
     }catch{
         console.error('Error while saving room');
     }
 }
 
-const saveUserInDataBase = async (socketId, username, roomId) => {
-    const newUser = new User({
-        name: username,
-        socketId: socketId,
-        room: roomId
-    })
+const saveUserSocketInDataBase = async (socket, googleId) => {
     try{
-        const user = await newUser.save();
-        console.log('Success saving User');
-        return user;
-    }catch{
-        console.error('Error while saving user');
+        const user = await User.findOneAndUpdate({ googleId: googleId},{socketId: socket.id});
+    }catch(err){
+        console.error('Error while saving usersocket to db')
     }
 }
 
@@ -70,20 +56,35 @@ const deliverMessage = async (socket, message) => {
         const time = moment().format('H:mm:ss, M-D-YYYY');
         const user = await User.findOne({ socketId: socket.id });
         if(!user) return;
-        socket.to(user.room).emit('recieve-message', message, user.name, time);
+        const room = [...socket.rooms].pop();
+        socket.to(room).emit('recieve-message', message, user.name, time);
         console.log(`delivered`);
     }catch{
         console.error('Error while delivering message!');
     }
 }
 
-const getRoomUsers = async (roomId) => {
+const getUser = async (socketId) => {
+    try{ return  await User.findOne({socketId: socketId});
+    }catch{ console.error('Error while searching user'); }
+}
+
+const getRoomUsers = async (socket,io,room) => {
     try{
-        const users = await User.find({ room: roomId });
-        console.log('Success getting room users.');
+        if(!room) return;
+        if(!io.sockets.adapter.rooms.get(room)) return;
+        const sockets = [...io.sockets.adapter.rooms.get(room)];
+        const users = [];
+        console.log(sockets);
+        if(!sockets || sockets.length == 0) return;
+        for(const socketId of sockets){
+            const user = await getUser(socketId);
+            if(user) users.push(user);
+        }
         return users;
-    }catch{
-        console.error('Error while searching for room users.');
+    }catch(err){
+        console.error('Error while searching for room users');
+        console.log(err)
     }
 }
 
@@ -91,38 +92,32 @@ const saveMessageInDataBase = async (socket ,message) => {
     try{
         const user = await User.findOne({ socketId: socket.id });
         const time = moment().format('H:mm:ss, M-D-YYYY');
+        const room = [...socket.rooms].pop();
         const newMessage = new Message({
             text: message,
             username: user.name,
             time: time,
-            room: user.room
+            room: room
         })
         const savedMessage = await newMessage.save();
         console.log('Success saving message.');
     }catch{
         console.error('Error while saving message.');
-    }
-    
+    }   
 }
 
-const deleteUserInDataBase = async (socket) => {
-    try{
-        const user = await User.findOne({ socketId: socket.id});
-        if(!user) return;
-        await User.findByIdAndDelete(user._id);
-        return user;
-    }catch{
-        console.error('Error while deleteing user.');
-    }
+const isLoggedIn = (req, res, next) => {
+    if(!req.user) return res.redirect('/google');
+    next();
 }
 
 module.exports = {
+    isLoggedIn,
+    getRoomUsers,
     renderHomePage,
     renderRoomPage,
-    createRoomInDataBase,
-    saveUserInDataBase,
     deliverMessage,
-    getRoomUsers,
     saveMessageInDataBase,
-    deleteUserInDataBase
+    createRoomInDataBase,
+    saveUserSocketInDataBase
 };

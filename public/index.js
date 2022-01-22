@@ -10,6 +10,7 @@ const messageInput = document.querySelector('#message-input');
 const usersContainer = document.querySelector('#users-container');
 
 if(roomButton){
+    console.log('home: '+userGoogleId);
     roomButton.addEventListener('click', (e) => {
         e.preventDefault();
         let roomName = roomInput.value;
@@ -21,9 +22,7 @@ if(roomButton){
 if(messageForm){
 
     const roomId = window.location.href.split('/').pop();
-    let username = prompt('Name: ');
-    if(username == '' || username == null) username = 'Guest';
-    socket.emit('connected-to-room',  username, roomId );
+    socket.emit('connected-to-room',  userGoogleId, roomId );
     messageInput.focus();
     
     messageButton.addEventListener('click', (e) => {
