@@ -1,6 +1,8 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../models/User');
+const dotenv = require('dotenv');
+dotenv.config();
 
 passport.serializeUser(function(user, done) {
     done(null, user._id);
@@ -12,8 +14,8 @@ passport.deserializeUser(async function(id, done) {
 });
 
 passport.use(new GoogleStrategy({
-    clientID: '25649677923-p9vqfus96u74c9p0gmreefma4o1emtcl.apps.googleusercontent.com',
-    clientSecret: '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',
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
     callbackURL: "https://flashcord.herokuapp.com/google/callback"
   },
   async function(accessToken, refreshToken, profile, done) {
