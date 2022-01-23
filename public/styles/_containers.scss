@@ -39,5 +39,16 @@
     } 
 }
 
+.profile-image{
+    border-radius: 50%;
+    height: 4rem;
+    margin-left: 1rem;
+}
+
+.show *{
+    @media (max-width:900px) {
+        display: none !important;
+    }
+}
 
 

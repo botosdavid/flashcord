@@ -15,8 +15,15 @@
 </head>
 <body class="d-flex align-items-center vh-100">
     <div class="bg-bg-2 container d-flex flex-column justify-content-between rounded h-75 containermain">
-        <div class="w-100 p-2">
+        <div class="w-100 p-2 d-flex justify-content-between align-items-center">
             <h3 class="text-prime">Flashcord <i class="bi bi-lightning-charge"></i></h2>
+                <div class="d-flex align-items-center">
+                    <div class="d-flex flex-column align-items-end show">
+                        <b class="text-second"><%= name %> </b>
+                        <small class="text-light"><%= email %></small>
+                    </div>
+                    <img class="profile-image" src="<%= picture %> " alt="Profile picture">
+                </div>
         </div>
         <div class="bg-bg-3 container p-4 rounded vh-50">
             <div>

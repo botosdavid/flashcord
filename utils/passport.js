@@ -23,7 +23,9 @@ passport.use(new GoogleStrategy({
                 const newUser = new User({
                     name: profile.displayName,
                     socketId: null,
-                    googleId: profile.id
+                    googleId: profile.id,
+                    picture: profile._json.picture,
+                    email: profile._json.email
                 })
                 user = await newUser.save();
             }

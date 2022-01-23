@@ -16,7 +16,13 @@ const renderHomePage = async (req,res) => {
         if(!req.user) return;
         const userGoogleId = req.user.googleId;
         const rooms = await Room.find();
-        return res.render('home', { rooms : rooms, googleId: userGoogleId });
+        return res.render('home', { 
+            rooms : rooms, 
+            googleId: userGoogleId, 
+            picture: req.user.picture,
+            email: req.user.email,
+            name: req.user.name
+        });
     }catch(err){
         console.error('Error while searching rooms');
     }
